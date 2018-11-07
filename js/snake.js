@@ -18,12 +18,15 @@ function setup() {
   scoreElem = createDiv('Score = 0');
   scoreElem.position(20, 20);
   scoreElem.id = 'score';
-  scoreElem.style('color', 'white');
+  scoreElem.style('color', 'brown');
 
-  createCanvas(500, 500);
+  createCanvas(1000, 500);
   frameRate(15);
   stroke(255);
   strokeWeight(10);
+  r = random(255);
+  g = random(255);
+  b = random(255);
   updateFruitCoordinates();
 
   for (var i = 0; i < numSegments; i++) {
@@ -37,9 +40,11 @@ function draw() {
   for (var i = 0; i < numSegments - 1; i++) {
     line(xCor[i], yCor[i], xCor[i + 1], yCor[i + 1]);
   }
+
   updateSnakeCoordinates();
-  checkGameStatus();
   checkForFruit();
+  checkGameStatus();
+
 }
 
 /*
@@ -76,7 +81,10 @@ function updateSnakeCoordinates() {
       xCor[numSegments - 1] = xCor[numSegments - 2];
       yCor[numSegments - 1] = yCor[numSegments - 2] + diff;
       break;
-  }
+  };
+
+
+
 }
 
 /*
@@ -93,6 +101,7 @@ function checkGameStatus() {
     noLoop();
     var scoreVal = parseInt(scoreElem.html().substring(8));
     scoreElem.html('Game ended! Your score was : ' + scoreVal);
+    gameoverSound()
   }
 }
 
@@ -123,6 +132,12 @@ function checkForFruit() {
     xCor.unshift(xCor[0]);
     yCor.unshift(yCor[0]);
     numSegments++;
+
+    r = random(255);
+    g = random(255);
+    b = random(255);
+    stroke(r, g, b);
+    eatFruitSound();
     updateFruitCoordinates();
   }
 }
@@ -136,10 +151,14 @@ function updateFruitCoordinates() {
 
   xFruit = floor(random(10, (width - 100) / 10)) * 10;
   yFruit = floor(random(10, (height - 100) / 10)) * 10;
+
 }
 
 function keyPressed() {
+playSound();
+
   switch (keyCode) {
+
     case 37:
       if (direction != 'right') {
         direction = 'left';
@@ -160,5 +179,99 @@ function keyPressed() {
         direction = 'down';
       }
       break;
+
+
   }
+
+
+}
+
+function eatFruitSound(event){
+  var fmSynth = new Tone.FMSynth (
+    {harmonicity  : 7 ,
+    modulationIndex  : 10 ,
+    detune  : 0 ,
+    envelope  : {
+      attack  : 0.01 ,
+  decay  : 0.01 ,
+  sustain  : 0.02 ,
+  release  : 0.5
+  }  ,
+  modulationEnvelope  : {
+  attack  : 0.2 ,
+  decay  : 0.02 ,
+  sustain  : 0.03 ,
+  release  : 0.5
+}
+
+
+}).toMaster()
+
+
+fmSynth.triggerAttackRelease('C4', '4n');
+fmSynth.harmonicity.value = 0.5;
+
+}
+
+function playSound() {
+
+
+  //create a synth and connect it to the master output (your speakers)
+  var synth = new Tone.Synth(
+    {
+      envelope: {
+        attack  : 0.0004 ,
+        decay  : 0.1,
+        sustain  : 0.0002 ,
+        release  : 0.0001
+      }
+  }).toMaster()
+
+  switch (keyCode) {
+    case 37:
+        synth.triggerAttackRelease('C4', '1n');
+        break;
+    case 38:
+        synth.triggerAttackRelease('D4', '1n');
+        break;
+    case 39:
+        synth.triggerAttackRelease('Eb4', '1n');
+        break;
+    case 40:
+        synth.triggerAttackRelease('F#4', '1n');
+        break;
+  }
+}
+
+function gameoverSound(){
+
+    var chorus = new Tone.Chorus(4, 2.5, 0.5);
+
+    var synth = new Tone.PolySynth(4, Tone.MonoSynth).connect(chorus);
+
+
+    synth.toMaster()
+
+
+    synth.triggerAttackRelease(["C4","E4","G#4"], "5n");
+
+
+}
+
+function background(){
+  var noise = new Tone.Noise("pink").start();
+  var autoFilter = new Tone.AutoFilter({
+	"frequency" : "8m",
+	"min" : 800,
+	"max" : 15000
+}).connect(Tone.Master);
+
+
+
+  noise.connect(autoFilter);
+
+ autoFilter.volume.value = -11;
+
+  autoFilter.start().toMaster()
+
 }
